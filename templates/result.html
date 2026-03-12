@@ -1,0 +1,371 @@
+{% extends "base.html" %} {% set active_page = 'home' %} {% block title
+%}Analysis Result - LoanSense AI{% endblock %} {% block extra_css %}
+<style>
+  .result-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .result-card {
+    text-align: center;
+    padding: 50px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+
+  .result-card.success::before {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+
+  .result-card.danger::before {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
+
+  .result-icon-wrap {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px;
+    font-size: 3rem;
+    position: relative;
+  }
+
+  .result-icon-wrap.success {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.15),
+      rgba(52, 211, 153, 0.1)
+    );
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    color: #10b981;
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.2);
+  }
+
+  .result-icon-wrap.danger {
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.15),
+      rgba(248, 113, 113, 0.1)
+    );
+    border: 2px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.2);
+  }
+
+  .result-icon-wrap::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  .result-icon-wrap.success::after {
+    border: 2px solid rgba(16, 185, 129, 0.2);
+  }
+
+  .result-icon-wrap.danger::after {
+    border: 2px solid rgba(239, 68, 68, 0.2);
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.4);
+      opacity: 0;
+    }
+  }
+
+  .result-heading {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .result-heading.success {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .result-heading.danger {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .result-description {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 36px;
+  }
+
+  .confidence-meter {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+
+  .confidence-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .confidence-label span:first-child {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .confidence-label span:last-child {
+    font-size: 1.2rem;
+  }
+
+  .confidence-label.success span:last-child {
+    color: #10b981;
+  }
+
+  .confidence-label.danger span:last-child {
+    color: #ef4444;
+  }
+
+  .progress-bar-track {
+    height: 10px;
+    background: var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 1.2s ease-out;
+  }
+
+  .progress-bar-fill.success {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+
+  .progress-bar-fill.danger {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
+
+  .insights-grid {
+    margin-top: 36px;
+  }
+
+  .insight-item {
+    background: rgba(59, 130, 246, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 22px;
+    text-align: left;
+    height: 100%;
+    transition: all 0.2s ease;
+  }
+
+  .insight-item:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-4px);
+  }
+
+  .insight-item h6 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-primary);
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+
+  .insight-item p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .action-btns {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 44px;
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    animation: confetti-fall 3s ease-out forwards;
+    z-index: 1000;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-100vh) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <h1><i class="fas fa-chart-pie"></i> Risk Assessment Complete</h1>
+  <p>Your loan application has been analyzed by LoanSense AI</p>
+</div>
+
+<!-- Result Card -->
+<div class="result-wrapper">
+  <div
+    class="card-main result-card {% if prediction == 0 %}success{% else %}danger{% endif %} animate-in"
+  >
+    <div
+      class="result-icon-wrap {% if prediction == 0 %}success{% else %}danger{% endif %}"
+    >
+      {% if prediction == 0 %}
+      <i class="fas fa-check-circle"></i>
+      {% else %}
+      <i class="fas fa-exclamation-triangle"></i>
+      {% endif %}
+    </div>
+
+    <h2
+      class="result-heading {% if prediction == 0 %}success{% else %}danger{% endif %}"
+    >
+      {% if prediction == 0 %} Low Default Risk {% else %} High Default Risk {%
+      endif %}
+    </h2>
+
+    <p class="result-description">
+      {% if prediction == 0 %} This application demonstrates strong financial
+      indicators suitable for loan approval. {% else %} This application may
+      require additional review or modified terms. {% endif %}
+    </p>
+
+    {% if probability is not none %}
+    <div class="confidence-meter">
+      <div
+        class="confidence-label {% if prediction == 0 %}success{% else %}danger{% endif %}"
+      >
+        <span><i class="fas fa-brain"></i> Model Confidence</span>
+        <span>{{ "%.1f"|format(probability * 100) }}%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div
+          class="progress-bar-fill {% if prediction == 0 %}success{% else %}danger{% endif %}"
+          style="width: {{ probability * 100 }}%"
+        ></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Insights -->
+    <div class="row g-4 insights-grid">
+      <div class="col-md-4">
+        <div class="insight-item">
+          <h6><i class="fas fa-robot"></i> AI Model</h6>
+          <p>
+            Random Forest classifier trained on 255K+ loan records with 88.6%
+            accuracy
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="insight-item">
+          <h6><i class="fas fa-cogs"></i> Features Analyzed</h6>
+          <p>
+            16 financial indicators including credit score, income, and loan
+            details
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="insight-item">
+          <h6><i class="fas fa-lightbulb"></i> Recommendation</h6>
+          <p>
+            {% if prediction == 0 %} Consider approving with standard terms and
+            conditions {% else %} Review additional documents or consider
+            different terms {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-btns">
+      <a href="/" class="btn-primary-main">
+        <i class="fas fa-redo"></i> New Analysis
+      </a>
+      <a href="/about" class="btn-secondary-main">
+        <i class="fas fa-info-circle"></i> Learn More
+      </a>
+      <a href="/stats" class="btn-secondary-main">
+        <i class="fas fa-chart-bar"></i> View Stats
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Animate progress bar on load
+  document.addEventListener('DOMContentLoaded', function() {
+      const fill = document.querySelector('.progress-bar-fill');
+      if (fill) {
+          const targetWidth = fill.style.width;
+          fill.style.width = '0%';
+          setTimeout(() => {
+              fill.style.width = targetWidth;
+          }, 200);
+      }
+
+      // Success confetti
+      {% if prediction == 0 %}
+      createConfetti();
+      {% endif %}
+  });
+
+  function createConfetti() {
+      const colors = ['#10b981', '#34d399', '#6ee7b7', '#3b82f6', '#60a5fa'];
+      for (let i = 0; i < 40; i++) {
+          setTimeout(() => {
+              const confetti = document.createElement('div');
+              confetti.className = 'confetti-piece';
+              confetti.style.left = Math.random() * 100 + 'vw';
+              confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+              confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+              document.body.appendChild(confetti);
+              setTimeout(() => confetti.remove(), 3000);
+          }, i * 60);
+      }
+  }
+</script>
+{% endblock %}

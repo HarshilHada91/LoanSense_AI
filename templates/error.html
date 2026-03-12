@@ -1,0 +1,147 @@
+{% extends "base.html" %} {% set active_page = 'home' %} {% block title %}Error
+- LoanSense AI{% endblock %} {% block extra_css %}
+<style>
+  .error-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 0;
+  }
+
+  .error-card {
+    text-align: center;
+    padding: 50px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .error-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
+
+  .error-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px;
+    font-size: 3.5rem;
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.15),
+      rgba(248, 113, 113, 0.1)
+    );
+    border: 2px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.2);
+    animation: error-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes error-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  .error-code {
+    font-size: 4rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .error-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .error-message {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    line-height: 1.7;
+  }
+
+  .error-details {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+
+  .error-details h6 {
+    color: #ef4444;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+
+  .error-details p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.9rem;
+    font-family: monospace;
+    word-break: break-word;
+  }
+
+  .error-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="error-wrapper">
+  <div class="card-main error-card animate-in">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-circle"></i>
+    </div>
+
+    <div class="error-code">Oops!</div>
+
+    <h2 class="error-title">Something Went Wrong</h2>
+
+    <p class="error-message">
+      An error occurred while processing your request. Please check your inputs
+      and try again.
+    </p>
+
+    {% if error_message %}
+    <div class="error-details">
+      <h6><i class="fas fa-bug"></i> Error Details</h6>
+      <p>{{ error_message }}</p>
+    </div>
+    {% endif %}
+
+    <div class="error-actions">
+      <a href="/" class="btn-primary-main">
+        <i class="fas fa-home"></i> Go Home
+      </a>
+      <a href="javascript:history.back()" class="btn-secondary-main">
+        <i class="fas fa-arrow-left"></i> Go Back
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
