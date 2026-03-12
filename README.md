@@ -268,3 +268,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 [Report Bug](https://github.com/HarshilHada91/LoanSense_AI-/issues) · [Request Feature](https://github.com/HarshilHada91/LoanSense_AI-/issues)
 
 </div>
+#   L o a n S e n s e _ A I -  
+ 
