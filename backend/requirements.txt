@@ -3,7 +3,7 @@ flask==2.3.3
 gunicorn==21.2.0
 Werkzeug==2.3.7
 
-# ML inference stack - pinned to versions with pre-built wheels
-numpy==1.26.4
-pandas==2.2.2
-scikit-learn==1.4.2
+# ML inference stack - compatible with Python 3.11-3.13, pre-built wheels available
+numpy>=1.26.4,<3.0
+pandas>=2.2.2,<3.0
+scikit-learn>=1.4.2,<2.0
