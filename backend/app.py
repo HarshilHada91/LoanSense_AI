@@ -13,7 +13,7 @@ import pandas as pd
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-TEMPLATES_DIR = BASE_DIR.parent / 'frontend' / 'templates'
+TEMPLATES_DIR = BASE_DIR.parent / 'frontend'
 
 # Initialize Flask app
 app = Flask(__name__, template_folder=str(TEMPLATES_DIR))
