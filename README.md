@@ -2,9 +2,9 @@
 
 An end-to-end machine learning web application that predicts loan default risk from applicant and loan attributes.
 
-![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-2.3-000000?style=flat-square&logo=flask&logoColor=white)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ## Table of Contents
@@ -25,10 +25,10 @@ An end-to-end machine learning web application that predicts loan default risk f
 
 ## Overview
 
-LoanSense AI helps evaluate whether a loan application is likely to default.
-It combines a trained classification model with a Flask-based UI and a JSON API.
+LoanSense AI helps evaluate whether a loan application is likely to default. It combines a trained classification model with a Flask-based UI and a JSON API.
 
 The project includes:
+
 - A browser interface for manual prediction.
 - A programmatic API endpoint for integration.
 - A notebook used for model development.
@@ -52,23 +52,30 @@ The project includes:
 
 ```text
 loan_ml_project/
-|-- app.py
-|-- requirements.txt
-|-- Procfile
-|-- runtime.txt
-|-- Loan_Default_ML_Project.ipynb
-|-- Loan_default.csv
-|-- model.pkl
-|-- scaler.pkl
-|-- label_encoders.pkl
-|-- feature_names.pkl
-|-- templates/
-|   |-- base.html
-|   |-- index.html
-|   |-- result.html
-|   |-- stats.html
-|   |-- about.html
-|   `-- error.html
+|-- backend/
+|   |-- app.py
+|   |-- requirements.txt
+|   |-- Procfile
+|   |-- runtime.txt
+|   |-- api/
+|   |   `-- index.py
+|   |-- Loan_Default_ML_Project.ipynb
+|   |-- Loan_default.csv
+|   |-- loan_model.pkl
+|   |-- model.pkl
+|   |-- scaler.pkl
+|   |-- label_encoders.pkl
+|   |-- feature_names.pkl
+|   `-- features.pkl
+|-- frontend/
+|   `-- templates/
+|       |-- base.html
+|       |-- index.html
+|       |-- result.html
+|       |-- stats.html
+|       |-- about.html
+|       `-- error.html
+|-- render.yaml
 `-- README.md
 ```
 
@@ -100,7 +107,7 @@ source .venv/bin/activate
 ### 3. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 ### 4. Run the Application
@@ -108,17 +115,18 @@ pip install -r requirements.txt
 Development mode:
 
 ```bash
-python app.py
+python backend/app.py
 ```
 
 Production-like local run:
 
 ```bash
-gunicorn app:app
+cd backend && gunicorn app:app
 ```
 
 Open the app at:
-- http://127.0.0.1:5000
+
+- <http://127.0.0.1:5000>
 
 ## Usage
 
@@ -178,9 +186,11 @@ Example response:
 ### POST /api/predict
 
 Input:
+
 - JSON object with all required numerical and categorical fields.
 
 Output:
+
 - `success`: boolean
 - `prediction`: 0 or 1
 - `prediction_label`: `No Default` or `Default`
@@ -188,12 +198,14 @@ Output:
 - `probability_no_default`: float
 
 Error output (HTTP 400):
+
 - `success`: false
 - `error`: error message
 
 ## Model Inputs
 
 Numerical features:
+
 - Age
 - Income
 - LoanAmount
@@ -205,6 +217,7 @@ Numerical features:
 - DTIRatio
 
 Categorical features:
+
 - Education
 - EmploymentType
 - MaritalStatus
@@ -215,23 +228,45 @@ Categorical features:
 
 ## Deployment
 
-This repository already includes:
-- `Procfile`: `web: gunicorn app:app`
-- `runtime.txt`: Python runtime version
+This repository already includes Render-ready configuration:
+
+- `render.yaml` in project root
+- `backend/Procfile`: `web: gunicorn app:app`
+- `backend/runtime.txt`: Python runtime version
 
 Suitable platforms:
+
 - Render
 - Railway
 - Heroku-compatible runtimes
 
+### Render (Recommended)
+
+Option 1: Blueprint deploy (recommended)
+
+1. Push this repository to GitHub.
+2. In Render, select New + and choose Blueprint.
+3. Select your repository and deploy.
+4. Render reads `render.yaml` and configures the service automatically.
+
+Option 2: Manual Web Service setup
+
+1. Create a new Web Service from your repository.
+2. Set Root Directory to `backend`.
+3. Set Build Command to `pip install -r requirements.txt`.
+4. Set Start Command to `gunicorn app:app`.
+5. Deploy.
+
 ## Troubleshooting
 
 - Model files missing at startup:
-  - Ensure `model.pkl`, `scaler.pkl`, `label_encoders.pkl`, and `feature_names.pkl` are present in the project root.
+  Ensure `loan_model.pkl` (or `model.pkl`), `scaler.pkl`, `label_encoders.pkl`, and `feature_names.pkl` are present in `backend/`.
 - Package installation issues:
-  - Upgrade pip using `python -m pip install --upgrade pip`.
+  Upgrade pip using `python -m pip install --upgrade pip`.
+- Render deployment fails to start:
+  Confirm Root Directory is `backend` and Start Command is `gunicorn app:app`.
 - Large model files on GitHub:
-  - This project uses Git LFS for large artifacts.
+  This project uses Git LFS for large artifacts.
 
 ## Roadmap
 

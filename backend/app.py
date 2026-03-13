@@ -10,21 +10,31 @@ from flask import Flask, render_template, request, jsonify
 import pickle
 import numpy as np
 import pandas as pd
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+TEMPLATES_DIR = BASE_DIR.parent / 'frontend' / 'templates'
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, template_folder=str(TEMPLATES_DIR))
 
 # Load the trained model and preprocessors
+
 try:
-    with open('model.pkl', 'rb') as f:
+    # Prefer the smaller model for serverless deployments; fallback keeps local compatibility.
+    model_path = BASE_DIR / 'loan_model.pkl'
+    if not model_path.exists():
+        model_path = BASE_DIR / 'model.pkl'
+
+    with open(model_path, 'rb') as f:
         model = pickle.load(f)
-    with open('scaler.pkl', 'rb') as f:
+    with open(BASE_DIR / 'scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
-    with open('label_encoders.pkl', 'rb') as f:
+    with open(BASE_DIR / 'label_encoders.pkl', 'rb') as f:
         label_encoders = pickle.load(f)
-    with open('feature_names.pkl', 'rb') as f:
+    with open(BASE_DIR / 'feature_names.pkl', 'rb') as f:
         feature_names = pickle.load(f)
-    print("✅ Model and preprocessors loaded successfully!")
+    print(f"✅ Model and preprocessors loaded successfully from {model_path.name}!")
 except FileNotFoundError:
     print("⚠️ Model files not found. Please run the notebook first to generate model files.")
     model = None

@@ -1,0 +1,8 @@
+# Exclude large/unneeded files from Vercel deployment bundle
+model.pkl
+Loan_Default_ML_Project.ipynb
+Loan_default.csv
+ml project guidline.pdf
+.dist/
+.git/
+.github/

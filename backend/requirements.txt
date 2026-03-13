@@ -1,0 +1,9 @@
+# Runtime dependencies for Flask inference app
+flask==2.3.3
+gunicorn==21.2.0
+Werkzeug==2.3.7
+
+# ML inference stack (Python 3.12 compatible)
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.4.2
