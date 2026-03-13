@@ -30,17 +30,18 @@ try:
         model = pickle.load(f)
     with open(BASE_DIR / 'scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
-    with open(BASE_DIR / 'label_encoders.pkl', 'rb') as f:
-        label_encoders = pickle.load(f)
-    with open(BASE_DIR / 'feature_names.pkl', 'rb') as f:
-        feature_names = pickle.load(f)
-    print(f"✅ Model and preprocessors loaded successfully from {model_path.name}!")
-except FileNotFoundError:
-    print("⚠️ Model files not found. Please run the notebook first to generate model files.")
+
+    # Load the post-encoding feature names (24 features) used during training
+    features_path = BASE_DIR / 'features.pkl'
+    with open(features_path, 'rb') as f:
+        model_features = pickle.load(f)
+
+    print(f"✅ Model loaded from {model_path.name} expecting {len(model_features)} features!")
+except FileNotFoundError as e:
+    print(f"⚠️ Model files not found: {e}. Please run the notebook first.")
     model = None
     scaler = None
-    label_encoders = None
-    feature_names = None
+    model_features = None
 
 # Define categorical options for the form
 EDUCATION_OPTIONS = ["High School", "Bachelor's", "Master's", "PhD"]
@@ -87,7 +88,7 @@ def predict():
         loan_purpose = request.form['loan_purpose']
         has_cosigner = request.form['has_cosigner']
         
-        # Create input DataFrame
+        # Build raw input DataFrame
         input_data = pd.DataFrame({
             'Age': [age],
             'Income': [income],
@@ -98,47 +99,38 @@ def predict():
             'InterestRate': [interest_rate],
             'LoanTerm': [loan_term],
             'DTIRatio': [dti_ratio],
+            'HasMortgage': [has_mortgage],
+            'HasDependents': [has_dependents],
+            'HasCoSigner': [has_cosigner],
             'Education': [education],
             'EmploymentType': [employment_type],
             'MaritalStatus': [marital_status],
-            'HasMortgage': [has_mortgage],
-            'HasDependents': [has_dependents],
-            'LoanPurpose': [loan_purpose],
-            'HasCoSigner': [has_cosigner]
+            'LoanPurpose': [loan_purpose]
         })
-        
-        # Define column types
-        numerical_cols = ['Age', 'Income', 'LoanAmount', 'CreditScore', 'MonthsEmployed', 
-                         'NumCreditLines', 'InterestRate', 'LoanTerm', 'DTIRatio']
-        categorical_cols = ['Education', 'EmploymentType', 'MaritalStatus', 
-                          'HasMortgage', 'HasDependents', 'LoanPurpose', 'HasCoSigner']
-        
-        # Scale numerical features ONLY
-        numerical_data = input_data[numerical_cols]
-        numerical_scaled = scaler.transform(numerical_data)
-        
-        # Encode categorical variables
-        categorical_encoded = []
-        for col in categorical_cols:
-            if col in label_encoders:
-                encoded_val = label_encoders[col].transform(input_data[col])[0]
-                categorical_encoded.append(encoded_val)
-        
-        # Combine scaled numerical + encoded categorical
-        input_final = np.concatenate([numerical_scaled[0], categorical_encoded]).reshape(1, -1)
-        
+
+        # Step 1: Binary label encode Yes/No columns (matches training)
+        binary_cols = ['HasMortgage', 'HasDependents', 'HasCoSigner']
+        for col in binary_cols:
+            input_data[col] = (input_data[col] == 'Yes').astype(int)
+
+        # Step 2: One-hot encode multi-class columns with drop_first=True (matches training)
+        multi_cat_cols = ['Education', 'EmploymentType', 'MaritalStatus', 'LoanPurpose']
+        input_encoded = pd.get_dummies(input_data, columns=multi_cat_cols, drop_first=True)
+
+        # Step 3: Scale numerical features
+        numerical_cols = ['Age', 'Income', 'LoanAmount', 'CreditScore', 'MonthsEmployed',
+                          'NumCreditLines', 'InterestRate', 'LoanTerm', 'DTIRatio']
+        input_encoded[numerical_cols] = scaler.transform(input_encoded[numerical_cols])
+
+        # Step 4: Align columns to exactly match training feature set (fills missing dummies with 0)
+        input_final = input_encoded.reindex(columns=model_features, fill_value=0)
+
         # Make prediction
         prediction = model.predict(input_final)[0]
         probability_array = model.predict_proba(input_final)[0]
-        
-        # Get the probability of the predicted class
-        # If prediction is 0 (no default), show probability of no default
-        # If prediction is 1 (default), show probability of default
-        if prediction == 0:
-            probability = probability_array[0]  # probability of no default
-        else:
-            probability = probability_array[1]  # probability of default
-        
+
+        probability = probability_array[0] if prediction == 0 else probability_array[1]
+
         return render_template('result.html', prediction=int(prediction), probability=float(probability))
         
     except Exception as e:
@@ -151,33 +143,31 @@ def api_predict():
     try:
         data = request.get_json()
         
-        # Create input DataFrame
+        # Build raw input DataFrame
         input_data = pd.DataFrame([data])
-        
-        # Define column types
-        numerical_cols = ['Age', 'Income', 'LoanAmount', 'CreditScore', 'MonthsEmployed', 
-                         'NumCreditLines', 'InterestRate', 'LoanTerm', 'DTIRatio']
-        categorical_cols = ['Education', 'EmploymentType', 'MaritalStatus', 
-                          'HasMortgage', 'HasDependents', 'LoanPurpose', 'HasCoSigner']
-        
-        # Scale numerical features ONLY
-        numerical_data = input_data[numerical_cols]
-        numerical_scaled = scaler.transform(numerical_data)
-        
-        # Encode categorical variables
-        categorical_encoded = []
-        for col in categorical_cols:
-            if col in label_encoders and col in input_data.columns:
-                encoded_val = label_encoders[col].transform(input_data[col])[0]
-                categorical_encoded.append(encoded_val)
-        
-        # Combine scaled numerical + encoded categorical
-        input_final = np.concatenate([numerical_scaled[0], categorical_encoded]).reshape(1, -1)
-        
+
+        # Binary label encode Yes/No columns
+        binary_cols = ['HasMortgage', 'HasDependents', 'HasCoSigner']
+        for col in binary_cols:
+            if col in input_data.columns:
+                input_data[col] = (input_data[col] == 'Yes').astype(int)
+
+        # One-hot encode multi-class columns with drop_first=True
+        multi_cat_cols = ['Education', 'EmploymentType', 'MaritalStatus', 'LoanPurpose']
+        input_encoded = pd.get_dummies(input_data, columns=multi_cat_cols, drop_first=True)
+
+        # Scale numerical features
+        numerical_cols = ['Age', 'Income', 'LoanAmount', 'CreditScore', 'MonthsEmployed',
+                          'NumCreditLines', 'InterestRate', 'LoanTerm', 'DTIRatio']
+        input_encoded[numerical_cols] = scaler.transform(input_encoded[numerical_cols])
+
+        # Align to training feature set
+        input_final = input_encoded.reindex(columns=model_features, fill_value=0)
+
         # Make prediction
         prediction = model.predict(input_final)[0]
         probability = model.predict_proba(input_final)[0]
-        
+
         return jsonify({
             'success': True,
             'prediction': int(prediction),
